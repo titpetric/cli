@@ -17,7 +17,8 @@ var errNoCommand = errors.New("no command found")
 type App struct {
 	Name string
 
-	commands map[string]CommandInfo
+	commands      map[string]CommandInfo
+	commandOrder  []string
 }
 
 // NewApp creates a new App instance.
@@ -25,6 +26,7 @@ func NewApp(name string) *App {
 	return &App{
 		Name:     name,
 		commands: make(map[string]CommandInfo),
+		commandOrder: []string{},
 	}
 }
 
@@ -94,14 +96,15 @@ func (app *App) Help() {
 	fmt.Println()
 
 	maxLen := 0
-	for _, command := range app.commands {
-		if len(command.Name) > maxLen {
-			maxLen = len(command.Name)
+	for _, name := range app.commandOrder {
+		if len(name) > maxLen {
+			maxLen = len(name)
 		}
 	}
 	pad := "   "
 	format := pad + "%-" + fmt.Sprintf("%d", maxLen+3) + "s %s\n"
-	for _, command := range app.commands {
+	for _, name := range app.commandOrder {
+		command := app.commands[name]
 		fmt.Printf(format, command.Name, command.Title)
 	}
 	fmt.Println()
@@ -123,6 +126,7 @@ func (app *App) AddCommand(name, title string, constructor func() *Command) {
 		New:   constructor,
 	}
 	app.commands[name] = info
+	app.commandOrder = append(app.commandOrder, name)
 }
 
 // FindCommand finds a command for the app.
