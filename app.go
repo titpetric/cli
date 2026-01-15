@@ -41,7 +41,7 @@ func (app *App) RunWithArgs(args []string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
-	commands := ParseCommands(args)
+	commands, trim := app.ParseCommands(args)
 	command, err := app.FindCommand(commands, app.DefaultCommand)
 	if err != nil {
 		app.Help()
@@ -61,7 +61,7 @@ func (app *App) RunWithArgs(args []string) error {
 
 	// Strip command names from args before parsing
 	flagArgs := args
-	if len(commands) > 0 {
+	if len(commands) > 0 && trim {
 		flagArgs = args[len(commands):]
 	}
 
@@ -176,12 +176,9 @@ func (app *App) FindCommand(commands []string, fallback string) (*Command, error
 }
 
 // ParseCommands cleans up args[], returning only commands.
-//
-// It looks inside args[] up until the first parameter that starts with "-", a
-// flag parameter. We asume all the parameters before are command names.
-//
-// Example: [a, b, -c, d, e] becomes [a, b].
-func ParseCommands(args []string) []string {
+// If no commands get parsed, the function returns the DefaultCommand
+// and false, hinting that args should not be trimmed.
+func (app *App) ParseCommands(args []string) ([]string, bool) {
 	result := []string{}
 	for _, v := range args {
 		if len(v) > 0 && v[0:1] == "-" {
@@ -189,5 +186,9 @@ func ParseCommands(args []string) []string {
 		}
 		result = append(result, v)
 	}
-	return result
+	if len(result) == 0 {
+		result = append(result, app.DefaultCommand)
+		return result, false
+	}
+	return result, true
 }

@@ -11,8 +11,6 @@ import (
 
 var NewApp = cli.NewApp
 
-var ParseCommands = cli.ParseCommands
-
 // TestApp_AddCommand tests that commands are registered and can be found.
 func TestApp_AddCommand(t *testing.T) {
 	app := NewApp("testapp")
@@ -56,38 +54,47 @@ func TestParseCommands(t *testing.T) {
 		name     string
 		args     []string
 		expected []string
+		wantOk   bool
 	}{
 		{
 			name:     "single command",
 			args:     []string{"hello"},
 			expected: []string{"hello"},
+			wantOk:   true,
 		},
 		{
 			name:     "command with flags",
 			args:     []string{"hello", "--name", "world"},
 			expected: []string{"hello"},
+			wantOk:   true,
 		},
 		{
 			name:     "multiple commands",
 			args:     []string{"sub", "cmd", "--flag"},
 			expected: []string{"sub", "cmd"},
+			wantOk:   true,
 		},
 		{
 			name:     "flag at start",
 			args:     []string{"--flag", "hello"},
-			expected: []string{},
+			expected: []string{"run"},
+			wantOk:   false,
 		},
 		{
 			name:     "empty args",
 			args:     []string{},
-			expected: []string{},
+			expected: []string{"run"},
+			wantOk:   false,
 		},
 	}
 
+	app := NewApp("testapp")
+	app.DefaultCommand = "run"
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ParseCommands(tt.args)
+			result, ok := app.ParseCommands(tt.args)
 			assert.Equal(t, tt.expected, result)
+			assert.Equal(t, tt.wantOk, ok)
 		})
 	}
 }

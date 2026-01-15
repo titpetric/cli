@@ -105,13 +105,13 @@ var (
 ## Function symbols
 
 - `func NewApp (name string) *App`
-- `func ParseCommands (args []string) []string`
 - `func ParseWithFlagSet (fs *FlagSet, args []string) error`
 - `func (*App) AddCommand (name,title string, constructor func() *Command)`
 - `func (*App) FindCommand (commands []string, fallback string) (*Command, error)`
 - `func (*App) HasCommand (name string) bool`
 - `func (*App) Help ()`
 - `func (*App) HelpCommand (fs *FlagSet, command *Command)`
+- `func (*App) ParseCommands (args []string) ([]string, bool)`
 - `func (*App) Run () error`
 - `func (*App) RunWithArgs (args []string) error`
 
@@ -121,19 +121,6 @@ NewApp creates a new App instance.
 
 ```go
 func NewApp (name string) *App
-```
-
-### ParseCommands
-
-ParseCommands cleans up args[], returning only commands.
-
-It looks inside args[] up until the first parameter that starts with "-", a
-flag parameter. We asume all the parameters before are command names.
-
-Example: [a, b, -c, d, e] becomes [a, b].
-
-```go
-func ParseCommands (args []string) []string
 ```
 
 ### ParseWithFlagSet
@@ -182,6 +169,16 @@ HelpCommand prints out help for a specific command.
 
 ```go
 func (*App) HelpCommand (fs *FlagSet, command *Command)
+```
+
+### ParseCommands
+
+ParseCommands cleans up args[], returning only commands.
+If no commands get parsed, the function returns the DefaultCommand
+and false, hinting that args should not be trimmed.
+
+```go
+func (*App) ParseCommands (args []string) ([]string, bool)
 ```
 
 ### Run
