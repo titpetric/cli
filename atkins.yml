@@ -19,6 +19,7 @@ jobs:
     passthru: true
     steps:
       - gotestsum ./... -- -count 1
+      - go-fsck docs . > README.md
 
   lint:
     passthru: true

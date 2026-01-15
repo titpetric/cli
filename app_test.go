@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	flag "github.com/spf13/pflag"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/titpetric/cli"
@@ -51,7 +51,7 @@ func TestApp_FindCommand_NoCommand(t *testing.T) {
 	assert.Contains(t, err.Error(), "no command specified")
 }
 
-// TestParseCommands tests that parseCommands extracts command names up to the first flag.
+// TestParseCommands tests that parseCommands extracts command names up to the first pflag.
 func TestParseCommands(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -103,7 +103,7 @@ func TestApp_RunWithArgs_Integration(t *testing.T) {
 
 		cmd := &Command{
 			Name: "test",
-			Bind: func(fs *flag.FlagSet) {
+			Bind: func(fs *pflag.FlagSet) {
 				fs.StringVar(&msg, "msg", "default", "")
 			},
 			Run: func(ctx context.Context, args []string) error {

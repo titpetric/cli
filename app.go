@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	flag "github.com/spf13/pflag"
+	"github.com/spf13/pflag"
 )
 
 var errNoCommand = errors.New("no command found")
@@ -47,7 +47,7 @@ func (app *App) RunWithArgs(args []string) error {
 	}
 
 	// Create a scoped FlagSet for this command
-	fs := flag.NewFlagSet(command.Name, flag.ContinueOnError)
+	fs := pflag.NewFlagSet(command.Name, pflag.ContinueOnError)
 	fs.Usage = func() {
 		app.HelpCommand(fs, command)
 	}
@@ -65,7 +65,10 @@ func (app *App) RunWithArgs(args []string) error {
 
 	// parse flags and set from environment
 	if err := ParseWithFlagSet(fs, flagArgs); err != nil {
-		app.HelpCommand(fs, command)
+		// pflag prints help automatically for --help, so don't print it again
+		if !errors.Is(err, pflag.ErrHelp) {
+			app.HelpCommand(fs, command)
+		}
 		return err
 	}
 
@@ -111,7 +114,7 @@ func (app *App) Help() {
 }
 
 // HelpCommand prints out help for a specific command.
-func (app *App) HelpCommand(fs *flag.FlagSet, command *Command) {
+func (app *App) HelpCommand(fs *pflag.FlagSet, command *Command) {
 	fmt.Println("Usage:", app.Name, command.Name, "[--flags]")
 	fmt.Println()
 	fs.PrintDefaults()

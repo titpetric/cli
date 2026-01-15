@@ -46,6 +46,7 @@ type App struct {
 	Name	string
 
 	commands	map[string]CommandInfo
+	commandOrder	[]string
 }
 ```
 
@@ -56,7 +57,7 @@ type (
 	Command	struct {
 		Name, Title	string
 
-		Bind	func(*flag.FlagSet)
+		Bind	func(*pflag.FlagSet)
 		Run	func(context.Context, []string) error
 	}
 
@@ -74,25 +75,25 @@ type (
 ```go
 // Flag variable binding functions from spf13/pflag.
 var (
-	BoolVar		= flag.BoolVar
-	DurationVar	= flag.DurationVar
-	Int64Var	= flag.Int64Var
-	IntVar		= flag.IntVar
-	StringVar	= flag.StringVar
-	Uint64Var	= flag.Uint64Var
-	UintVar		= flag.UintVar
-	StringSliceVar	= flag.StringSliceVar
+	BoolVar		= pflag.BoolVar
+	DurationVar	= pflag.DurationVar
+	Int64Var	= pflag.Int64Var
+	IntVar		= pflag.IntVar
+	StringVar	= pflag.StringVar
+	Uint64Var	= pflag.Uint64Var
+	UintVar		= pflag.UintVar
+	StringSliceVar	= pflag.StringSliceVar
 
-	BoolVarP	= flag.BoolVarP
-	DurationVarP	= flag.DurationVarP
-	Int64VarP	= flag.Int64VarP
-	IntVarP		= flag.IntVarP
-	StringVarP	= flag.StringVarP
-	Uint64VarP	= flag.Uint64VarP
-	UintVarP	= flag.UintVarP
-	StringSliceVarP	= flag.StringSliceVarP
+	BoolVarP	= pflag.BoolVarP
+	DurationVarP	= pflag.DurationVarP
+	Int64VarP	= pflag.Int64VarP
+	IntVarP		= pflag.IntVarP
+	StringVarP	= pflag.StringVarP
+	Uint64VarP	= pflag.Uint64VarP
+	UintVarP	= pflag.UintVarP
+	StringSliceVarP	= pflag.StringSliceVarP
 
-	PrintDefaults	= flag.PrintDefaults
+	PrintDefaults	= pflag.PrintDefaults
 )
 ```
 
@@ -100,11 +101,11 @@ var (
 
 - `func NewApp (name string) *App`
 - `func ParseCommands (args []string) []string`
-- `func ParseWithFlagSet (fs *flag.FlagSet, args []string) error`
+- `func ParseWithFlagSet (fs *pflag.FlagSet, args []string) error`
 - `func (*App) AddCommand (name,title string, constructor func() *Command)`
 - `func (*App) FindCommand (commands []string, fallback string) (*Command, error)`
 - `func (*App) Help ()`
-- `func (*App) HelpCommand (fs *flag.FlagSet, command *Command)`
+- `func (*App) HelpCommand (fs *pflag.FlagSet, command *Command)`
 - `func (*App) Run () error`
 - `func (*App) RunWithArgs (args []string) error`
 
@@ -134,7 +135,7 @@ func ParseCommands (args []string) []string
 ParseWithFlagSet parses flags and environment variables for a scoped FlagSet.
 
 ```go
-func ParseWithFlagSet (fs *flag.FlagSet, args []string) error
+func ParseWithFlagSet (fs *pflag.FlagSet, args []string) error
 ```
 
 ### AddCommand
@@ -166,7 +167,7 @@ func (*App) Help ()
 HelpCommand prints out help for a specific command.
 
 ```go
-func (*App) HelpCommand (fs *flag.FlagSet, command *Command)
+func (*App) HelpCommand (fs *pflag.FlagSet, command *Command)
 ```
 
 ### Run

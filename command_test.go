@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	flag "github.com/spf13/pflag"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/titpetric/cli"
@@ -21,7 +21,7 @@ func TestCommand_Bind(t *testing.T) {
 
 	cmd := &Command{
 		Name: "test",
-		Bind: func(fs *flag.FlagSet) {
+		Bind: func(fs *pflag.FlagSet) {
 			fs.StringVar(&name, "name", "default", "")
 			fs.IntVar(&count, "count", 0, "")
 		},
@@ -33,7 +33,7 @@ func TestCommand_Bind(t *testing.T) {
 	}
 
 	// Simulate app.RunWithArgs
-	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	fs.Usage = func() {}
 	cmd.Bind(fs)
 
@@ -51,7 +51,7 @@ func TestCommand_ParseEnvironment(t *testing.T) {
 
 	cmd := &Command{
 		Name: "test",
-		Bind: func(fs *flag.FlagSet) {
+		Bind: func(fs *pflag.FlagSet) {
 			fs.StringVar(&dbDsn, "db-dsn", "default", "")
 		},
 		Run: func(ctx context.Context, args []string) error {
@@ -61,7 +61,7 @@ func TestCommand_ParseEnvironment(t *testing.T) {
 	}
 
 	// Simulate app.RunWithArgs with environment
-	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	fs.Usage = func() {}
 	cmd.Bind(fs)
 
@@ -87,7 +87,7 @@ func TestCommand_MultipleFlags(t *testing.T) {
 
 	cmd := &Command{
 		Name: "test",
-		Bind: func(fs *flag.FlagSet) {
+		Bind: func(fs *pflag.FlagSet) {
 			fs.StringVar(&strFlag, "str", "", "")
 			fs.IntVar(&intFlag, "num", 0, "")
 			fs.BoolVar(&boolFlag, "verbose", false, "")
@@ -100,7 +100,7 @@ func TestCommand_MultipleFlags(t *testing.T) {
 		},
 	}
 
-	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	fs.Usage = func() {}
 	cmd.Bind(fs)
 
@@ -115,7 +115,7 @@ func TestCommand_MultipleFlags(t *testing.T) {
 func TestParseWithFlagSet(t *testing.T) {
 	var dbDsn string
 
-	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	fs.StringVar(&dbDsn, "db-dsn", "default", "")
 
 	err := ParseWithFlagSet(fs, []string{})

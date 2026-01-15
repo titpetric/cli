@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	flag "github.com/spf13/pflag"
+	"github.com/spf13/pflag"
 )
 
 // This package builds on spf13/pflag functionality.
@@ -22,25 +22,25 @@ import (
 
 // Flag variable binding functions from spf13/pflag.
 var (
-	BoolVar        = flag.BoolVar
-	DurationVar    = flag.DurationVar
-	Int64Var       = flag.Int64Var
-	IntVar         = flag.IntVar
-	StringVar      = flag.StringVar
-	Uint64Var      = flag.Uint64Var
-	UintVar        = flag.UintVar
-	StringSliceVar = flag.StringSliceVar
+	BoolVar        = pflag.BoolVar
+	DurationVar    = pflag.DurationVar
+	Int64Var       = pflag.Int64Var
+	IntVar         = pflag.IntVar
+	StringVar      = pflag.StringVar
+	Uint64Var      = pflag.Uint64Var
+	UintVar        = pflag.UintVar
+	StringSliceVar = pflag.StringSliceVar
 
-	BoolVarP        = flag.BoolVarP
-	DurationVarP    = flag.DurationVarP
-	Int64VarP       = flag.Int64VarP
-	IntVarP         = flag.IntVarP
-	StringVarP      = flag.StringVarP
-	Uint64VarP      = flag.Uint64VarP
-	UintVarP        = flag.UintVarP
-	StringSliceVarP = flag.StringSliceVarP
+	BoolVarP        = pflag.BoolVarP
+	DurationVarP    = pflag.DurationVarP
+	Int64VarP       = pflag.Int64VarP
+	IntVarP         = pflag.IntVarP
+	StringVarP      = pflag.StringVarP
+	Uint64VarP      = pflag.Uint64VarP
+	UintVarP        = pflag.UintVarP
+	StringSliceVarP = pflag.StringSliceVarP
 
-	PrintDefaults = flag.PrintDefaults
+	PrintDefaults = pflag.PrintDefaults
 )
 
 // Command and CommandInfo types for CLI command handling.
@@ -49,7 +49,7 @@ type (
 	Command struct {
 		Name, Title string
 
-		Bind func(*flag.FlagSet)
+		Bind func(*pflag.FlagSet)
 		Run  func(context.Context, []string) error
 	}
 
@@ -62,7 +62,7 @@ type (
 )
 
 // ParseWithFlagSet parses flags and environment variables for a scoped FlagSet.
-func ParseWithFlagSet(fs *flag.FlagSet, args []string) error {
+func ParseWithFlagSet(fs *pflag.FlagSet, args []string) error {
 	// FlagSets are optional, but generally filled.
 	if fs == nil {
 		return nil
