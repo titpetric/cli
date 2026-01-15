@@ -71,7 +71,8 @@ func (app *App) RunWithArgs(args []string) error {
 	// Run command if defined
 	if command.Run != nil {
 		remainingArgs := fs.Args()
-		if len(remainingArgs) > 0 && remainingArgs[0] == app.DefaultCommand {
+
+		if len(remainingArgs) > 0 && remainingArgs[0] == command.Name {
 			remainingArgs = remainingArgs[1:]
 		}
 
