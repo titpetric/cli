@@ -114,7 +114,7 @@ func (app *App) Help() {
 }
 
 // HelpCommand prints out help for a specific command.
-func (app *App) HelpCommand(fs *pflag.FlagSet, command *Command) {
+func (app *App) HelpCommand(fs *FlagSet, command *Command) {
 	fmt.Println("Usage:", app.Name, command.Name, "[--flags]")
 	fmt.Println()
 	fs.PrintDefaults()

@@ -34,7 +34,7 @@ command type was passed into Run().
 
 The cli package creates a `CommandInfo` with AddCommand, and then calls
 the constructor of the `*Command` type. The type must have Run filled, and
-can implement Bind(*pflag.FlagSet) to read in CLI flags.
+can implement Bind(*FlagSet) to read in CLI flags.
 
 The Run function is context aware, supporting observability.
 
@@ -53,11 +53,14 @@ type App struct {
 ```go
 // Command and CommandInfo types for CLI command handling.
 type (
+	// FlagSet is here to prevent pflag leaking to imports.
+	FlagSet	= pflag.FlagSet
+
 	// Command is an individual command
 	Command	struct {
 		Name, Title	string
 
-		Bind	func(*pflag.FlagSet)
+		Bind	func(*FlagSet)
 		Run	func(context.Context, []string) error
 	}
 
@@ -101,11 +104,11 @@ var (
 
 - `func NewApp (name string) *App`
 - `func ParseCommands (args []string) []string`
-- `func ParseWithFlagSet (fs *pflag.FlagSet, args []string) error`
+- `func ParseWithFlagSet (fs *FlagSet, args []string) error`
 - `func (*App) AddCommand (name,title string, constructor func() *Command)`
 - `func (*App) FindCommand (commands []string, fallback string) (*Command, error)`
 - `func (*App) Help ()`
-- `func (*App) HelpCommand (fs *pflag.FlagSet, command *Command)`
+- `func (*App) HelpCommand (fs *FlagSet, command *Command)`
 - `func (*App) Run () error`
 - `func (*App) RunWithArgs (args []string) error`
 
@@ -135,7 +138,7 @@ func ParseCommands (args []string) []string
 ParseWithFlagSet parses flags and environment variables for a scoped FlagSet.
 
 ```go
-func ParseWithFlagSet (fs *pflag.FlagSet, args []string) error
+func ParseWithFlagSet (fs *FlagSet, args []string) error
 ```
 
 ### AddCommand
@@ -167,7 +170,7 @@ func (*App) Help ()
 HelpCommand prints out help for a specific command.
 
 ```go
-func (*App) HelpCommand (fs *pflag.FlagSet, command *Command)
+func (*App) HelpCommand (fs *FlagSet, command *Command)
 ```
 
 ### Run

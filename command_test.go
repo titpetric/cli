@@ -21,7 +21,7 @@ func TestCommand_Bind(t *testing.T) {
 
 	cmd := &Command{
 		Name: "test",
-		Bind: func(fs *pflag.FlagSet) {
+		Bind: func(fs *cli.FlagSet) {
 			fs.StringVar(&name, "name", "default", "")
 			fs.IntVar(&count, "count", 0, "")
 		},
@@ -51,7 +51,7 @@ func TestCommand_ParseEnvironment(t *testing.T) {
 
 	cmd := &Command{
 		Name: "test",
-		Bind: func(fs *pflag.FlagSet) {
+		Bind: func(fs *cli.FlagSet) {
 			fs.StringVar(&dbDsn, "db-dsn", "default", "")
 		},
 		Run: func(ctx context.Context, args []string) error {
@@ -87,7 +87,7 @@ func TestCommand_MultipleFlags(t *testing.T) {
 
 	cmd := &Command{
 		Name: "test",
-		Bind: func(fs *pflag.FlagSet) {
+		Bind: func(fs *cli.FlagSet) {
 			fs.StringVar(&strFlag, "str", "", "")
 			fs.IntVar(&intFlag, "num", 0, "")
 			fs.BoolVar(&boolFlag, "verbose", false, "")

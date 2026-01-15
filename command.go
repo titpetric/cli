@@ -45,11 +45,14 @@ var (
 
 // Command and CommandInfo types for CLI command handling.
 type (
+	// FlagSet is here to prevent pflag leaking to imports.
+	FlagSet = pflag.FlagSet
+
 	// Command is an individual command
 	Command struct {
 		Name, Title string
 
-		Bind func(*pflag.FlagSet)
+		Bind func(*FlagSet)
 		Run  func(context.Context, []string) error
 	}
 
@@ -62,7 +65,7 @@ type (
 )
 
 // ParseWithFlagSet parses flags and environment variables for a scoped FlagSet.
-func ParseWithFlagSet(fs *pflag.FlagSet, args []string) error {
+func ParseWithFlagSet(fs *FlagSet, args []string) error {
 	// FlagSets are optional, but generally filled.
 	if fs == nil {
 		return nil

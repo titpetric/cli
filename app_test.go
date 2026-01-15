@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/titpetric/cli"
@@ -103,7 +102,7 @@ func TestApp_RunWithArgs_Integration(t *testing.T) {
 
 		cmd := &Command{
 			Name: "test",
-			Bind: func(fs *pflag.FlagSet) {
+			Bind: func(fs *cli.FlagSet) {
 				fs.StringVar(&msg, "msg", "default", "")
 			},
 			Run: func(ctx context.Context, args []string) error {

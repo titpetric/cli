@@ -27,7 +27,7 @@
 //
 // The cli package creates a `CommandInfo` with AddCommand, and then calls
 // the constructor of the `*Command` type. The type must have Run filled, and
-// can implement Bind(*pflag.FlagSet) to read in CLI flags.
+// can implement Bind(*FlagSet) to read in CLI flags.
 //
 // The Run function is context aware, supporting observability.
 package cli
