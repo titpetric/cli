@@ -11,6 +11,7 @@ import (
 )
 
 var NewApp = cli.NewApp
+
 var ParseCommands = cli.ParseCommands
 
 // TestApp_AddCommand tests that commands are registered and can be found.

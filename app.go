@@ -17,15 +17,15 @@ var errNoCommand = errors.New("no command found")
 type App struct {
 	Name string
 
-	commands      map[string]CommandInfo
-	commandOrder  []string
+	commands     map[string]CommandInfo
+	commandOrder []string
 }
 
 // NewApp creates a new App instance.
 func NewApp(name string) *App {
 	return &App{
-		Name:     name,
-		commands: make(map[string]CommandInfo),
+		Name:         name,
+		commands:     make(map[string]CommandInfo),
 		commandOrder: []string{},
 	}
 }
