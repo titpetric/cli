@@ -15,7 +15,8 @@ var errNoCommand = errors.New("no command found")
 
 // App is the cli entrypoint.
 type App struct {
-	Name string
+	Name           string
+	DefaultCommand string
 
 	commands     map[string]CommandInfo
 	commandOrder []string
@@ -39,8 +40,9 @@ func (app *App) Run() error {
 func (app *App) RunWithArgs(args []string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
+
 	commands := ParseCommands(args)
-	command, err := app.FindCommand(commands, "")
+	command, err := app.FindCommand(commands, app.DefaultCommand)
 	if err != nil {
 		app.Help()
 		return err
@@ -115,7 +117,12 @@ func (app *App) Help() {
 
 // HelpCommand prints out help for a specific command.
 func (app *App) HelpCommand(fs *FlagSet, command *Command) {
-	fmt.Println("Usage:", app.Name, command.Name, "[--flags]")
+	usage := app.Name
+	if !command.Default {
+		usage += " " + command.Name
+	}
+	usage += " [--flags]"
+	fmt.Println("Usage:", usage)
 	fmt.Println()
 	fs.PrintDefaults()
 	fmt.Println()
@@ -130,6 +137,12 @@ func (app *App) AddCommand(name, title string, constructor func() *Command) {
 	}
 	app.commands[name] = info
 	app.commandOrder = append(app.commandOrder, name)
+}
+
+// HasCommand checks if a command exists in the app.
+func (app *App) HasCommand(name string) bool {
+	_, ok := app.commands[name]
+	return ok
 }
 
 // FindCommand finds a command for the app.

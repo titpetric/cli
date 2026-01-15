@@ -43,7 +43,8 @@ The Run function is context aware, supporting observability.
 ```go
 // App is the cli entrypoint.
 type App struct {
-	Name	string
+	Name		string
+	DefaultCommand	string
 
 	commands	map[string]CommandInfo
 	commandOrder	[]string
@@ -56,10 +57,11 @@ type (
 	// FlagSet is here to prevent pflag leaking to imports.
 	FlagSet	= pflag.FlagSet
 
-	// Command is an individual command
+	// Command is an individual command.
 	Command	struct {
-		Name, Title	string
-
+		Name	string
+		Title	string
+		Default	bool
 		Bind	func(*FlagSet)
 		Run	func(context.Context, []string) error
 	}
@@ -107,6 +109,7 @@ var (
 - `func ParseWithFlagSet (fs *FlagSet, args []string) error`
 - `func (*App) AddCommand (name,title string, constructor func() *Command)`
 - `func (*App) FindCommand (commands []string, fallback string) (*Command, error)`
+- `func (*App) HasCommand (name string) bool`
 - `func (*App) Help ()`
 - `func (*App) HelpCommand (fs *FlagSet, command *Command)`
 - `func (*App) Run () error`
@@ -155,6 +158,14 @@ FindCommand finds a command for the app.
 
 ```go
 func (*App) FindCommand (commands []string, fallback string) (*Command, error)
+```
+
+### HasCommand
+
+HasCommand checks if a command exists in the app.
+
+```go
+func (*App) HasCommand (name string) bool
 ```
 
 ### Help

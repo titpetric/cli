@@ -48,12 +48,13 @@ type (
 	// FlagSet is here to prevent pflag leaking to imports.
 	FlagSet = pflag.FlagSet
 
-	// Command is an individual command
+	// Command is an individual command.
 	Command struct {
-		Name, Title string
-
-		Bind func(*FlagSet)
-		Run  func(context.Context, []string) error
+		Name    string
+		Title   string
+		Default bool
+		Bind    func(*FlagSet)
+		Run     func(context.Context, []string) error
 	}
 
 	// CommandInfo is the constructor info for a command
