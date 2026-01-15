@@ -111,7 +111,7 @@ var (
 - `func (*App) HasCommand (name string) bool`
 - `func (*App) Help ()`
 - `func (*App) HelpCommand (fs *FlagSet, command *Command)`
-- `func (*App) ParseCommands (args []string) ([]string, bool)`
+- `func (*App) ParseCommands (args []string) []string`
 - `func (*App) Run () error`
 - `func (*App) RunWithArgs (args []string) error`
 
@@ -174,11 +174,10 @@ func (*App) HelpCommand (fs *FlagSet, command *Command)
 ### ParseCommands
 
 ParseCommands cleans up args[], returning only commands.
-If no commands get parsed, the function returns the DefaultCommand
-and false, hinting that args should not be trimmed.
+If no commands are detected, DefaultCommand is returned.
 
 ```go
-func (*App) ParseCommands (args []string) ([]string, bool)
+func (*App) ParseCommands (args []string) []string
 ```
 
 ### Run

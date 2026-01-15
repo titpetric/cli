@@ -41,7 +41,7 @@ func (app *App) RunWithArgs(args []string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
-	commands, trim := app.ParseCommands(args)
+	commands := app.ParseCommands(args)
 	command, err := app.FindCommand(commands, app.DefaultCommand)
 	if err != nil {
 		app.Help()
@@ -59,14 +59,8 @@ func (app *App) RunWithArgs(args []string) error {
 		command.Bind(fs)
 	}
 
-	// Strip command names from args before parsing
-	flagArgs := args
-	if len(commands) > 0 && trim {
-		flagArgs = args[len(commands):]
-	}
-
 	// parse flags and set from environment
-	if err := ParseWithFlagSet(fs, flagArgs); err != nil {
+	if err := ParseWithFlagSet(fs, args); err != nil {
 		// pflag prints help automatically for --help, so don't print it again
 		if !errors.Is(err, pflag.ErrHelp) {
 			app.HelpCommand(fs, command)
@@ -76,12 +70,11 @@ func (app *App) RunWithArgs(args []string) error {
 
 	// Run command if defined
 	if command.Run != nil {
-		// Pass remaining command tokens plus any positional args after flags
-		// commands[1:] skips the matched command name, leaving sub-commands/args
 		remainingArgs := fs.Args()
-		if len(commands) > 1 {
-			remainingArgs = append(commands[1:], remainingArgs...)
+		if len(remainingArgs) > 0 && remainingArgs[0] == app.DefaultCommand {
+			remainingArgs = remainingArgs[1:]
 		}
+
 		err = command.Run(ctx, remainingArgs)
 		// don't print help with standard "context canceled" exit
 		if err != nil && !errors.Is(err, context.Canceled) {
@@ -176,9 +169,8 @@ func (app *App) FindCommand(commands []string, fallback string) (*Command, error
 }
 
 // ParseCommands cleans up args[], returning only commands.
-// If no commands get parsed, the function returns the DefaultCommand
-// and false, hinting that args should not be trimmed.
-func (app *App) ParseCommands(args []string) ([]string, bool) {
+// If no commands are detected, DefaultCommand is returned.
+func (app *App) ParseCommands(args []string) []string {
 	result := []string{}
 	for _, v := range args {
 		if len(v) > 0 && v[0:1] == "-" {
@@ -188,7 +180,7 @@ func (app *App) ParseCommands(args []string) ([]string, bool) {
 	}
 	if len(result) == 0 {
 		result = append(result, app.DefaultCommand)
-		return result, false
+		return result
 	}
-	return result, true
+	return result
 }
