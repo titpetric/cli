@@ -1,199 +1,33 @@
-# Package cli
-
-```go
-import (
-	"github.com/titpetric/cli"
-}
-```
 # CLI package
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/titpetric/cli.svg)](https://pkg.go.dev/github.com/titpetric/cli)
+[![Coverage](https://img.shields.io/badge/coverage-59.40%25-brightgreen.svg)](https://github.com/titpetric/cli)
+
 This package contains the implementation for a minimal opinionated flags
-framework similar to spf13/cobra. It all centers around the `cli.Command` type
-but provides less functionality.
+framework similar to spf13/cobra. It all centers around the
+`cli.Command` type but provides less functionality.
 
-To create a new CLI application:
+The package is low-dependency, only relying on the pflag package, to
+provide `--` unix flag options.
 
-```go
-app := cli.NewApp("mig")
-app.AddCommand("version", version.Name, version.New)
+This package is used in:
 
-	if err := app.Run(); err != nil {
-	        return err
-	}
+- [github.com/go-bridget/mig](https://github.com/go-bridget/mig) - database migration tooling,
+- [github.com/titpetric/atkins](https://github.com/titpetric/atkins) - a local command runner for CI,
+- [github.com/titpetric/vuego-cli](https://github.com/titpetric/vuego-cli) - a vuego template engine docs server, CLI,
+- [github.com/titpetric/etl](https://github.com/titpetric/etl) - database agnostic tooling to interface databases
+- [github.com/titpetric/exp](https://github.com/titpetric/exp) - experimental CLI tooling, notably `go-fsck`
 
-```
+It's existed in some form for many years and I kept rewriting the CLIs
+to the next best thing, this exists for me to stop worring about flags
+like not an already solved problem. Reuse what works.
 
-The `version.New` is a `func() *cli.Command`.
+- no environment handling (put it in default value with `os.Getenv`)
+- provide defaults with or without env support
+- scoped flagset bindings with Bind()
+- error handling, usage, help
 
-The Command type defines Name and Title as strings, equivallent to cobra
-`Command.Use` (Name) and `Command.Long` (Title). There is no equivalent
-of `Command.Short`.
-
-The API choices are different, cobra's `AddCommand` took a command, and the
-command type was passed into Run().
-
-The cli package creates a `CommandInfo` with AddCommand, and then calls
-the constructor of the `*Command` type. The type must have Run filled, and
-can implement Bind(*FlagSet) to read in CLI flags.
-
-The Run function is context aware, supporting observability.
-
-## Types
-
-```go
-// App is the cli entrypoint.
-type App struct {
-	Name		string
-	DefaultCommand	string
-
-	commands	map[string]CommandInfo
-	commandOrder	[]string
-}
-```
-
-```go
-// Command and CommandInfo types for CLI command handling.
-type (
-	// FlagSet is here to prevent pflag leaking to imports.
-	FlagSet	= pflag.FlagSet
-
-	// Command is an individual command.
-	Command	struct {
-		Name	string
-		Title	string
-		Default	bool
-		Bind	func(*FlagSet)
-		Run	func(context.Context, []string) error
-	}
-
-	// CommandInfo is the constructor info for a command
-	CommandInfo	struct {
-		Name	string
-		Title	string
-		New	func() *Command
-	}
-)
-```
-
-## Vars
-
-```go
-// Flag variable binding functions from spf13/pflag.
-var (
-	BoolVar		= pflag.BoolVar
-	DurationVar	= pflag.DurationVar
-	Int64Var	= pflag.Int64Var
-	IntVar		= pflag.IntVar
-	StringVar	= pflag.StringVar
-	Uint64Var	= pflag.Uint64Var
-	UintVar		= pflag.UintVar
-	StringSliceVar	= pflag.StringSliceVar
-
-	BoolVarP	= pflag.BoolVarP
-	DurationVarP	= pflag.DurationVarP
-	Int64VarP	= pflag.Int64VarP
-	IntVarP		= pflag.IntVarP
-	StringVarP	= pflag.StringVarP
-	Uint64VarP	= pflag.Uint64VarP
-	UintVarP	= pflag.UintVarP
-	StringSliceVarP	= pflag.StringSliceVarP
-
-	PrintDefaults	= pflag.PrintDefaults
-)
-```
-
-## Function symbols
-
-- `func NewApp (name string) *App`
-- `func ParseWithFlagSet (fs *FlagSet, args []string) error`
-- `func (*App) AddCommand (name,title string, constructor func() *Command)`
-- `func (*App) FindCommand (commands []string, fallback string) (*Command, error)`
-- `func (*App) HasCommand (name string) bool`
-- `func (*App) Help ()`
-- `func (*App) HelpCommand (fs *FlagSet, command *Command)`
-- `func (*App) ParseCommands (args []string) []string`
-- `func (*App) Run () error`
-- `func (*App) RunWithArgs (args []string) error`
-
-### NewApp
-
-NewApp creates a new App instance.
-
-```go
-func NewApp (name string) *App
-```
-
-### ParseWithFlagSet
-
-ParseWithFlagSet parses flags and environment variables for a scoped FlagSet.
-
-```go
-func ParseWithFlagSet (fs *FlagSet, args []string) error
-```
-
-### AddCommand
-
-AddCommand adds a command to the app.
-
-```go
-func (*App) AddCommand (name,title string, constructor func() *Command)
-```
-
-### FindCommand
-
-FindCommand finds a command for the app.
-
-```go
-func (*App) FindCommand (commands []string, fallback string) (*Command, error)
-```
-
-### HasCommand
-
-HasCommand checks if a command exists in the app.
-
-```go
-func (*App) HasCommand (name string) bool
-```
-
-### Help
-
-Help prints out registered commands for app.
-
-```go
-func (*App) Help ()
-```
-
-### HelpCommand
-
-HelpCommand prints out help for a specific command.
-
-```go
-func (*App) HelpCommand (fs *FlagSet, command *Command)
-```
-
-### ParseCommands
-
-ParseCommands cleans up args[], returning only commands.
-If no commands are detected, DefaultCommand is returned.
-
-```go
-func (*App) ParseCommands (args []string) []string
-```
-
-### Run
-
-Run passes os.Args without the command name to RunWithArgs().
-
-```go
-func (*App) Run () error
-```
-
-### RunWithArgs
-
-RunWithArgs is a cli entrypoint which sets up a cancellable context for the command.
-
-```go
-func (*App) RunWithArgs (args []string) error
-```
-
-
+The benchmark are tools like `git`, `docker`, `docker compose`, `go`
+where there is a mixture of command arguments (`git status`, `git pull`,
+...) and flags like `-d`, `--force`. This package is the minimal shed in
+the back, the "cli package we have at home".
