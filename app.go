@@ -61,10 +61,13 @@ func (app *App) RunWithArgs(args []string) error {
 
 	// parse flags and set from environment
 	if err := ParseWithFlagSet(fs, args); err != nil {
-		// pflag prints help automatically for --help, so don't print it again
-		if !errors.Is(err, pflag.ErrHelp) {
+		// pflag returns ErrHelp when --help is used
+		if errors.Is(err, pflag.ErrHelp) {
 			app.HelpCommand(fs, command)
+			return nil
 		}
+		// Other errors: show help context and return error
+		app.HelpCommand(fs, command)
 		return err
 	}
 

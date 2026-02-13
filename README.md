@@ -1,4 +1,4 @@
-# CLI package
+# cli - A minimal CLI command package using pflag
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/titpetric/cli.svg)](https://pkg.go.dev/github.com/titpetric/cli)
 [![Coverage](https://img.shields.io/badge/coverage-59.40%25-brightgreen.svg)](https://github.com/titpetric/cli)
