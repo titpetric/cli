@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/spf13/pflag"
@@ -46,6 +47,9 @@ func (app *App) RunWithArgs(args []string) error {
 	command, err := app.FindCommand(commands, app.DefaultCommand)
 	if err != nil {
 		app.Help()
+		if app.hasHelpFlag(args) {
+			return nil
+		}
 		return err
 	}
 
@@ -55,9 +59,8 @@ func (app *App) RunWithArgs(args []string) error {
 		app.HelpCommand(fs, command)
 	}
 
-	// bind root-level options (--help, -h)
-	var opts Options
-	opts.Bind(fs)
+	// bind root-level --help/-h flag
+	fs.BoolP("help", "h", false, "show usage information")
 
 	// bind command specific flags
 	if command.Bind != nil {
@@ -85,7 +88,7 @@ func (app *App) RunWithArgs(args []string) error {
 	}
 
 	// If --help or -h was passed, show appropriate help
-	if opts.Help {
+	if f := fs.Lookup("help"); f != nil && f.Changed {
 		if explicitCommand {
 			app.HelpCommand(fs, command)
 		} else {
@@ -144,13 +147,25 @@ func (app *App) HelpCommand(fs *FlagSet, command *Command) {
 	usage += " [--flags]"
 	fmt.Println("Usage:", usage)
 	fmt.Println()
-	// Print command-specific flags only (excludes --help)
-	if command.Flags != nil {
-		command.Flags.PrintDefaults()
-	} else {
-		fs.PrintDefaults()
+
+	if command.Usage != nil {
+		if text := strings.TrimSpace(command.Usage()); text != "" {
+			fmt.Println(text)
+			fmt.Println()
+		}
 	}
-	fmt.Println()
+
+	// Print command-specific flags only (excludes --help)
+	flags := fs
+	if command.Flags != nil {
+		flags = command.Flags
+	}
+	if flags.HasFlags() {
+		fmt.Println("Available options:")
+		fmt.Println()
+		flags.PrintDefaults()
+		fmt.Println()
+	}
 }
 
 // AddCommand adds a command to the app.
@@ -168,6 +183,16 @@ func (app *App) AddCommand(name, title string, constructor func() *Command) {
 func (app *App) HasCommand(name string) bool {
 	_, ok := app.commands[name]
 	return ok
+}
+
+// hasHelpFlag checks if args contain --help or -h.
+func (app *App) hasHelpFlag(args []string) bool {
+	for _, arg := range args {
+		if arg == "--help" || arg == "-h" {
+			return true
+		}
+	}
+	return false
 }
 
 // hasExplicitCommand checks if args contain an explicit command name (not a flag).

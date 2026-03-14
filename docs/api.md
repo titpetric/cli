@@ -52,14 +52,6 @@ type App struct {
 ```
 
 ```go
-// Options provides common root-level flags (--help, -h) for all commands.
-// Embed this in your command's options struct to add help support.
-type Options struct {
-	Help bool
-}
-```
-
-```go
 // Command and CommandInfo types for CLI command handling.
 type (
 	// FlagSet is here to prevent pflag leaking to imports.
@@ -70,6 +62,7 @@ type (
 		Name	string
 		Title	string
 		Default	bool
+		Usage	func() string
 		Bind	func(*FlagSet)
 		Run	func(context.Context, []string) error
 
@@ -101,7 +94,6 @@ type (
 - `func (*App) ParseCommands (args []string) []string`
 - `func (*App) Run () error`
 - `func (*App) RunWithArgs (args []string) error`
-- `func (*Options) Bind (fs *FlagSet)`
 
 ### NewApp
 
@@ -182,14 +174,6 @@ RunWithArgs is a cli entrypoint which sets up a cancellable context for the comm
 
 ```go
 func (*App) RunWithArgs (args []string) error
-```
-
-### Bind
-
-Bind registers the --help/-h flag on the given FlagSet.
-
-```go
-func (*Options) Bind (fs *FlagSet)
 ```
 
 
