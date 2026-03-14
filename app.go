@@ -45,56 +45,47 @@ func (app *App) RunWithArgs(args []string) error {
 	commands := app.ParseCommands(args)
 	explicitCommand := app.hasExplicitCommand(args)
 	command, err := app.FindCommand(commands, app.DefaultCommand)
-	if err != nil {
-		app.Help()
-		if app.hasHelpFlag(args) {
-			return nil
-		}
-		return err
-	}
 
 	// Create a scoped FlagSet for this command
-	fs := pflag.NewFlagSet(command.Name, pflag.ContinueOnError)
+	name := app.Name
+	if command != nil {
+		name = command.Name
+	}
+	fs := pflag.NewFlagSet(name, pflag.ContinueOnError)
 	fs.Usage = func() {
-		app.HelpCommand(fs, command)
+		if command != nil && explicitCommand {
+			app.HelpCommand(fs, command)
+		} else {
+			app.Help()
+		}
 	}
 
-	// bind root-level --help/-h flag
-	fs.BoolP("help", "h", false, "show usage information")
+	if err != nil {
+		if errors.Is(fs.Parse(args), pflag.ErrHelp) {
+			return nil
+		}
+		app.Help()
+		return err
+	}
 
 	// bind command specific flags
 	if command.Bind != nil {
 		command.Bind(fs)
 	}
 
-	// build a separate FlagSet with only command-specific flags (excludes --help)
+	// build a separate FlagSet with only command-specific flags
 	command.Flags = pflag.NewFlagSet(command.Name+"-flags", pflag.ContinueOnError)
 	fs.VisitAll(func(f *pflag.Flag) {
-		if f.Name != "help" {
-			command.Flags.AddFlag(f)
-		}
+		command.Flags.AddFlag(f)
 	})
 
 	// parse flags and set from environment
 	if err := ParseWithFlagSet(fs, args); err != nil {
-		// pflag returns ErrHelp when --help is used
-		// Note: pflag already calls fs.Usage() which prints help, so we don't call HelpCommand again
 		if errors.Is(err, pflag.ErrHelp) {
 			return nil
 		}
-		// Other errors: show help context and return error
 		app.HelpCommand(fs, command)
 		return err
-	}
-
-	// If --help or -h was passed, show appropriate help
-	if f := fs.Lookup("help"); f != nil && f.Changed {
-		if explicitCommand {
-			app.HelpCommand(fs, command)
-		} else {
-			app.Help()
-		}
-		return nil
 	}
 
 	// Run command if defined
@@ -183,16 +174,6 @@ func (app *App) AddCommand(name, title string, constructor func() *Command) {
 func (app *App) HasCommand(name string) bool {
 	_, ok := app.commands[name]
 	return ok
-}
-
-// hasHelpFlag checks if args contain --help or -h.
-func (app *App) hasHelpFlag(args []string) bool {
-	for _, arg := range args {
-		if arg == "--help" || arg == "-h" {
-			return true
-		}
-	}
-	return false
 }
 
 // hasExplicitCommand checks if args contain an explicit command name (not a flag).
