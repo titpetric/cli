@@ -17,7 +17,7 @@ func ExampleApp() {
 			Name:  "version",
 			Title: "Print version information",
 			Bind: func(fs *cli.FlagSet) {
-				cli.BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
+				fs.BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
 			},
 			Run: func(ctx context.Context, args []string) error {
 				if verbose {

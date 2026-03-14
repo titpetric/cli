@@ -64,6 +64,14 @@ func (app *App) RunWithArgs(args []string) error {
 		command.Bind(fs)
 	}
 
+	// build a separate FlagSet with only command-specific flags (excludes --help)
+	command.Flags = pflag.NewFlagSet(command.Name+"-flags", pflag.ContinueOnError)
+	fs.VisitAll(func(f *pflag.Flag) {
+		if f.Name != "help" {
+			command.Flags.AddFlag(f)
+		}
+	})
+
 	// parse flags and set from environment
 	if err := ParseWithFlagSet(fs, args); err != nil {
 		// pflag returns ErrHelp when --help is used
@@ -136,7 +144,12 @@ func (app *App) HelpCommand(fs *FlagSet, command *Command) {
 	usage += " [--flags]"
 	fmt.Println("Usage:", usage)
 	fmt.Println()
-	fs.PrintDefaults()
+	// Print command-specific flags only (excludes --help)
+	if command.Flags != nil {
+		command.Flags.PrintDefaults()
+	} else {
+		fs.PrintDefaults()
+	}
 	fmt.Println()
 }
 

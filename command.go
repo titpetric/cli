@@ -20,29 +20,6 @@ import (
 // That being said, it's still possible to use the spf13/pflag API, but there
 // should be little reason to do that.
 
-// Flag variable binding functions from spf13/pflag.
-var (
-	BoolVar        = pflag.BoolVar
-	DurationVar    = pflag.DurationVar
-	Int64Var       = pflag.Int64Var
-	IntVar         = pflag.IntVar
-	StringVar      = pflag.StringVar
-	Uint64Var      = pflag.Uint64Var
-	UintVar        = pflag.UintVar
-	StringSliceVar = pflag.StringSliceVar
-
-	BoolVarP        = pflag.BoolVarP
-	DurationVarP    = pflag.DurationVarP
-	Int64VarP       = pflag.Int64VarP
-	IntVarP         = pflag.IntVarP
-	StringVarP      = pflag.StringVarP
-	Uint64VarP      = pflag.Uint64VarP
-	UintVarP        = pflag.UintVarP
-	StringSliceVarP = pflag.StringSliceVarP
-
-	PrintDefaults = pflag.PrintDefaults
-)
-
 // Options provides common root-level flags (--help, -h) for all commands.
 // Embed this in your command's options struct to add help support.
 type Options struct {
@@ -66,6 +43,12 @@ type (
 		Default bool
 		Bind    func(*FlagSet)
 		Run     func(context.Context, []string) error
+
+		// Flags is a separate FlagSet containing only command-specific
+		// flags (excluding root-level flags like --help). It is populated
+		// automatically by App.RunWithArgs and can be used to print
+		// command flag defaults without the --help flag.
+		Flags *FlagSet
 	}
 
 	// CommandInfo is the constructor info for a command
