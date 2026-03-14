@@ -42,6 +42,7 @@ func (app *App) RunWithArgs(args []string) error {
 	defer cancel()
 
 	commands := app.ParseCommands(args)
+	explicitCommand := app.hasExplicitCommand(args)
 	command, err := app.FindCommand(commands, app.DefaultCommand)
 	if err != nil {
 		app.Help()
@@ -53,6 +54,10 @@ func (app *App) RunWithArgs(args []string) error {
 	fs.Usage = func() {
 		app.HelpCommand(fs, command)
 	}
+
+	// bind root-level options (--help, -h)
+	var opts Options
+	opts.Bind(fs)
 
 	// bind command specific flags
 	if command.Bind != nil {
@@ -69,6 +74,16 @@ func (app *App) RunWithArgs(args []string) error {
 		// Other errors: show help context and return error
 		app.HelpCommand(fs, command)
 		return err
+	}
+
+	// If --help or -h was passed, show appropriate help
+	if opts.Help {
+		if explicitCommand {
+			app.HelpCommand(fs, command)
+		} else {
+			app.Help()
+		}
+		return nil
 	}
 
 	// Run command if defined
@@ -140,6 +155,15 @@ func (app *App) AddCommand(name, title string, constructor func() *Command) {
 func (app *App) HasCommand(name string) bool {
 	_, ok := app.commands[name]
 	return ok
+}
+
+// hasExplicitCommand checks if args contain an explicit command name (not a flag).
+func (app *App) hasExplicitCommand(args []string) bool {
+	if len(args) == 0 {
+		return false
+	}
+	first := args[0]
+	return len(first) > 0 && first[0] != '-' && app.HasCommand(first)
 }
 
 // FindCommand finds a command for the app.

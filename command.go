@@ -43,6 +43,17 @@ var (
 	PrintDefaults = pflag.PrintDefaults
 )
 
+// Options provides common root-level flags (--help, -h) for all commands.
+// Embed this in your command's options struct to add help support.
+type Options struct {
+	Help bool
+}
+
+// Bind registers the --help/-h flag on the given FlagSet.
+func (o *Options) Bind(fs *FlagSet) {
+	fs.BoolVarP(&o.Help, "help", "h", false, "show usage information")
+}
+
 // Command and CommandInfo types for CLI command handling.
 type (
 	// FlagSet is here to prevent pflag leaking to imports.

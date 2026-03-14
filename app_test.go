@@ -92,6 +92,38 @@ func TestParseCommands(t *testing.T) {
 	}
 }
 
+// TestApp_RunWithArgs_Help tests that --help and -h show help without error.
+func TestApp_RunWithArgs_Help(t *testing.T) {
+	newApp := func() *cli.App {
+		app := NewApp("testapp")
+		app.AddCommand("test", "Test command", func() *Command {
+			return &Command{
+				Bind: func(fs *cli.FlagSet) {
+					var msg string
+					fs.StringVar(&msg, "msg", "", "a message")
+				},
+				Run: func(ctx context.Context, args []string) error {
+					t.Fatal("command should not execute when help is passed")
+					return nil
+				},
+			}
+		})
+		app.DefaultCommand = "test"
+		return app
+	}
+
+	for _, flag := range []string{"--help", "-h"} {
+		t.Run("app "+flag, func(t *testing.T) {
+			err := newApp().RunWithArgs([]string{flag})
+			assert.NoError(t, err)
+		})
+		t.Run("command "+flag, func(t *testing.T) {
+			err := newApp().RunWithArgs([]string{"test", flag})
+			assert.NoError(t, err)
+		})
+	}
+}
+
 // TestApp_RunWithArgs_Integration tests the full command execution flow.
 func TestApp_RunWithArgs_Integration(t *testing.T) {
 	app := NewApp("testapp")
