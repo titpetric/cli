@@ -18,7 +18,7 @@
 //
 // The `version.New` is a `func() *cli.Command`.
 //
-// The Command type defines Name and Title as strings, equivallent to cobra
+// The Command type defines Name and Title as strings, equivalent to cobra
 // `Command.Use` (Name) and `Command.Long` (Title). There is no equivalent
 // of `Command.Short`.
 //
