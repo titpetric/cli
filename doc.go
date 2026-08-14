@@ -1,33 +1,31 @@
-// # CLI package
+// Package cli implements a minimal, opinionated command and flag framework
+// built on spf13/pflag.
 //
-// This package contains the implementation for a minimal opinionated flags
-// framework similar to spf13/cobra. It all centers around the `cli.Command` type
-// but provides less functionality.
+// An App registers command constructors with [App.AddCommand]. The selected
+// constructor creates a [Command], whose Bind callback defines scoped flags and
+// whose Run callback executes with a signal-aware context.
 //
-// To create a new CLI application:
+// A minimal application looks like this:
 //
-// ```go
-// app := cli.NewApp("mig")
-// app.AddCommand("version", version.Name, version.New)
-//
+//	app := cli.NewApp("mig")
+//	app.AddCommand("version", "Print version information", func() *cli.Command {
+//		return &cli.Command{
+//			Run: func(ctx context.Context, args []string) error {
+//				fmt.Println("mig version 1.2.3")
+//				return nil
+//			},
+//		}
+//	})
 //	if err := app.Run(); err != nil {
-//	        return err
+//		return err
 //	}
 //
-// ```
+// [App.DefaultCommand] selects a command when no explicit command is present.
+// Flags are defined in [Command.Bind]. Before argument parsing, matching
+// environment variables are applied to unchanged flags: names are lowercased
+// and underscores become hyphens, so DB_DSN maps to --db-dsn.
 //
-// The `version.New` is a `func() *cli.Command`.
-//
-// The Command type defines Name and Title as strings, equivalent to cobra
-// `Command.Use` (Name) and `Command.Long` (Title). There is no equivalent
-// of `Command.Short`.
-//
-// The API choices are different, cobra's `AddCommand` took a command, and the
-// command type was passed into Run().
-//
-// The cli package creates a `CommandInfo` with AddCommand, and then calls
-// the constructor of the `*Command` type. The type must have Run filled, and
-// can implement Bind(*FlagSet) to read in CLI flags.
-//
-// The Run function is context aware, supporting observability.
+// The -h and --help flags print help and return nil. Command lookup and flag
+// parsing errors print relevant usage before being returned. Errors produced by
+// [Command.Run] are returned without printing usage.
 package cli

@@ -5,45 +5,45 @@ import (
 	"github.com/titpetric/cli"
 }
 ```
-# CLI package
+Package cli implements a minimal, opinionated command and flag framework
+built on spf13/pflag.
 
-This package contains the implementation for a minimal opinionated flags
-framework similar to spf13/cobra. It all centers around the `cli.Command` type
-but provides less functionality.
+An App registers command constructors with [App.AddCommand]. The selected
+constructor creates a [Command], whose Bind callback defines scoped flags and
+whose Run callback executes with a signal-aware context.
 
-To create a new CLI application:
+A minimal application looks like this:
 
-```go
-app := cli.NewApp("mig")
-app.AddCommand("version", version.Name, version.New)
-
+	app := cli.NewApp("mig")
+	app.AddCommand("version", "Print version information", func() *cli.Command {
+		return &cli.Command{
+			Run: func(ctx context.Context, args []string) error {
+				fmt.Println("mig version 1.2.3")
+				return nil
+			},
+		}
+	})
 	if err := app.Run(); err != nil {
-	        return err
+		return err
 	}
 
-```
+[App.DefaultCommand] selects a command when no explicit command is present.
+Flags are defined in [Command.Bind]. Before argument parsing, matching
+environment variables are applied to unchanged flags: names are lowercased
+and underscores become hyphens, so DB_DSN maps to --db-dsn.
 
-The `version.New` is a `func() *cli.Command`.
-
-The Command type defines Name and Title as strings, equivalent to cobra
-`Command.Use` (Name) and `Command.Long` (Title). There is no equivalent
-of `Command.Short`.
-
-The API choices are different, cobra's `AddCommand` took a command, and the
-command type was passed into Run().
-
-The cli package creates a `CommandInfo` with AddCommand, and then calls
-the constructor of the `*Command` type. The type must have Run filled, and
-can implement Bind(*FlagSet) to read in CLI flags.
-
-The Run function is context aware, supporting observability.
+The -h and --help flags print help and return nil. Command lookup and flag
+parsing errors print relevant usage before being returned. Errors produced by
+[Command.Run] are returned without printing usage.
 
 ## Types
 
 ```go
 // App is the cli entrypoint.
 type App struct {
-	Name		string
+	// Name is the executable name shown in usage output.
+	Name	string
+	// DefaultCommand is selected when no explicit command is provided.
 	DefaultCommand	string
 
 	commands	map[string]CommandInfo
@@ -59,17 +59,21 @@ type (
 
 	// Command is an individual command.
 	Command	struct {
+		// Name defaults to the name registered with App.AddCommand.
 		Name	string
+		// Title defaults to the title registered with App.AddCommand.
 		Title	string
+		// Default omits the command name from this command's usage line.
 		Default	bool
+		// Usage returns optional descriptive text printed before flag defaults.
 		Usage	func() string
+		// Bind defines this command's flags.
 		Bind	func(*FlagSet)
+		// Run executes the command with its remaining positional arguments.
 		Run	func(context.Context, []string) error
 
-		// Flags is a separate FlagSet containing only command-specific
-		// flags (excluding root-level flags like --help). It is populated
-		// automatically by App.RunWithArgs and can be used to print
-		// command flag defaults without the --help flag.
+		// Flags is populated by App.RunWithArgs with the flags defined by Bind.
+		// HelpCommand uses it to print command flag defaults.
 		Flags	*FlagSet
 	}
 
@@ -105,7 +109,10 @@ func NewApp (name string) *App
 
 ### ParseWithFlagSet
 
-ParseWithFlagSet parses flags and environment variables for a scoped FlagSet.
+ParseWithFlagSet applies environment variables and parses args for a scoped
+FlagSet. Environment names are lowercased and underscores become hyphens;
+variables without an underscore or a matching flag are ignored. Argument
+values take precedence over environment values.
 
 ```go
 func ParseWithFlagSet (fs *FlagSet, args []string) error
@@ -170,7 +177,9 @@ func (*App) Run () error
 
 ### RunWithArgs
 
-RunWithArgs is a cli entrypoint which sets up a cancellable context for the command.
+RunWithArgs selects and executes a command with a context canceled by SIGINT
+or SIGTERM. Help requests return nil; lookup and flag parsing errors print
+usage, while errors returned by Command.Run do not.
 
 ```go
 func (*App) RunWithArgs (args []string) error

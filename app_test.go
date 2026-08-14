@@ -2,6 +2,9 @@ package cli_test
 
 import (
 	"context"
+	"errors"
+	"io"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -151,4 +154,35 @@ func TestApp_RunWithArgs_Integration(t *testing.T) {
 	err := app.RunWithArgs([]string{"test", "--msg", "hello"})
 	assert.NoError(t, err)
 	assert.True(t, executed)
+}
+
+// TestApp_RunWithArgs_CommandErrorDoesNotPrintUsage ensures runtime failures
+// are not presented as command-line usage errors.
+func TestApp_RunWithArgs_CommandErrorDoesNotPrintUsage(t *testing.T) {
+	app := NewApp("testapp")
+	wantErr := errors.New("command failed")
+	app.AddCommand("test", "Test command", func() *Command {
+		return &Command{
+			Run: func(ctx context.Context, args []string) error {
+				return wantErr
+			},
+		}
+	})
+
+	stdout := os.Stdout
+	read, write, err := os.Pipe()
+	assert.NoError(t, err)
+	os.Stdout = write
+	t.Cleanup(func() {
+		os.Stdout = stdout
+	})
+
+	runErr := app.RunWithArgs([]string{"test"})
+	assert.NoError(t, write.Close())
+	output, err := io.ReadAll(read)
+	assert.NoError(t, err)
+	assert.NoError(t, read.Close())
+
+	assert.ErrorIs(t, runErr, wantErr)
+	assert.Empty(t, output)
 }

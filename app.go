@@ -16,7 +16,9 @@ var errNoCommand = errors.New("no command found")
 
 // App is the cli entrypoint.
 type App struct {
-	Name           string
+	// Name is the executable name shown in usage output.
+	Name string
+	// DefaultCommand is selected when no explicit command is provided.
 	DefaultCommand string
 
 	commands     map[string]CommandInfo
@@ -37,7 +39,9 @@ func (app *App) Run() error {
 	return app.RunWithArgs(os.Args[1:])
 }
 
-// RunWithArgs is a cli entrypoint which sets up a cancellable context for the command.
+// RunWithArgs selects and executes a command with a context canceled by SIGINT
+// or SIGTERM. Help requests return nil; lookup and flag parsing errors print
+// usage, while errors returned by Command.Run do not.
 func (app *App) RunWithArgs(args []string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
@@ -97,9 +101,7 @@ func (app *App) RunWithArgs(args []string) error {
 		}
 
 		err = command.Run(ctx, remainingArgs)
-		// don't print help with standard "context canceled" exit
-		if err != nil && !errors.Is(err, context.Canceled) {
-			app.HelpCommand(fs, command)
+		if err != nil {
 			return err
 		}
 		return nil

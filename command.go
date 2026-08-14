@@ -27,17 +27,21 @@ type (
 
 	// Command is an individual command.
 	Command struct {
-		Name    string
-		Title   string
+		// Name defaults to the name registered with App.AddCommand.
+		Name string
+		// Title defaults to the title registered with App.AddCommand.
+		Title string
+		// Default omits the command name from this command's usage line.
 		Default bool
-		Usage   func() string
-		Bind    func(*FlagSet)
-		Run     func(context.Context, []string) error
+		// Usage returns optional descriptive text printed before flag defaults.
+		Usage func() string
+		// Bind defines this command's flags.
+		Bind func(*FlagSet)
+		// Run executes the command with its remaining positional arguments.
+		Run func(context.Context, []string) error
 
-		// Flags is a separate FlagSet containing only command-specific
-		// flags (excluding root-level flags like --help). It is populated
-		// automatically by App.RunWithArgs and can be used to print
-		// command flag defaults without the --help flag.
+		// Flags is populated by App.RunWithArgs with the flags defined by Bind.
+		// HelpCommand uses it to print command flag defaults.
 		Flags *FlagSet
 	}
 
@@ -49,7 +53,10 @@ type (
 	}
 )
 
-// ParseWithFlagSet parses flags and environment variables for a scoped FlagSet.
+// ParseWithFlagSet applies environment variables and parses args for a scoped
+// FlagSet. Environment names are lowercased and underscores become hyphens;
+// variables without an underscore or a matching flag are ignored. Argument
+// values take precedence over environment values.
 func ParseWithFlagSet(fs *FlagSet, args []string) error {
 	// FlagSets are optional, but generally filled.
 	if fs == nil {
