@@ -93,4 +93,4 @@ errors and selecting an exit status.
 - [github.com/titpetric/atkins](https://github.com/titpetric/atkins) - a local command runner for CI
 - [github.com/titpetric/vuego-cli](https://github.com/titpetric/vuego-cli) - a Vuego template engine documentation server
 - [github.com/titpetric/etl](https://github.com/titpetric/etl) - database-agnostic database tooling
-- [github.com/titpetric/exp](https://github.com/titpetric/exp) - experimental CLI tooling, notably `go-fsck`
+- [github.com/titpetric/exp](https://github.com/titpetric/exp) - experimental CLI tooling
