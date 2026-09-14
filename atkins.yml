@@ -17,7 +17,7 @@ jobs:
     passthru: true
     steps:
       - gotestsum ./... -- -count 1
-      - go-fsck docs . > docs/api.md
+      - splint docs . > docs/api.md
 
   lint:
     passthru: true

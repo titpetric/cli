@@ -3,8 +3,9 @@
 ```go
 import (
 	"github.com/titpetric/cli"
-}
+)
 ```
+
 Package cli implements a minimal, opinionated command and flag framework
 built on spf13/pflag.
 
@@ -14,18 +15,20 @@ whose Run callback executes with a signal-aware context.
 
 A minimal application looks like this:
 
-	app := cli.NewApp("mig")
-	app.AddCommand("version", "Print version information", func() *cli.Command {
-		return &cli.Command{
-			Run: func(ctx context.Context, args []string) error {
-				fmt.Println("mig version 1.2.3")
-				return nil
-			},
-		}
-	})
-	if err := app.Run(); err != nil {
-		return err
+```go
+app := cli.NewApp("mig")
+app.AddCommand("version", "Print version information", func() *cli.Command {
+	return &cli.Command{
+		Run: func(ctx context.Context, args []string) error {
+			fmt.Println("mig version 1.2.3")
+			return nil
+		},
 	}
+})
+if err := app.Run(); err != nil {
+	return err
+}
+```
 
 [App.DefaultCommand] selects a command when no explicit command is present.
 Flags are defined in [Command.Bind]. Before argument parsing, matching
@@ -37,6 +40,9 @@ parsing errors print relevant usage before being returned. Errors produced by
 [Command.Run] are returned without printing usage.
 
 ## Types
+
+<details>
+<summary><code>type App</code></summary>
 
 ```go
 // App is the cli entrypoint.
@@ -50,6 +56,11 @@ type App struct {
 	commandOrder	[]string
 }
 ```
+
+</details>
+
+<details>
+<summary><code>type FlagSet, Command, CommandInfo</code></summary>
 
 ```go
 // Command and CommandInfo types for CLI command handling.
@@ -85,6 +96,8 @@ type (
 	}
 )
 ```
+
+</details>
 
 ## Function symbols
 
@@ -185,4 +198,46 @@ usage, while errors returned by Command.Run do not.
 func (*App) RunWithArgs (args []string) error
 ```
 
+## Examples
+
+<section name="ExampleApp">
+
+### ExampleApp
+
+```go
+func ExampleApp() {
+	app := cli.NewApp("mig")
+
+	app.AddCommand("version", "Print version information", func() *cli.Command {
+		var verbose bool
+
+		return &cli.Command{
+			Name:	"version",
+			Title:	"Print version information",
+			Bind: func(fs *cli.FlagSet) {
+				fs.BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
+			},
+			Run: func(ctx context.Context, args []string) error {
+				if verbose {
+					fmt.Println("mig version 1.2.3 (commit abcdef)")
+				} else {
+					fmt.Println("mig version 1.2.3")
+				}
+				return nil
+			},
+		}
+	})
+
+	// In a real program you would call:
+	//     _ = app.Run()
+	//
+	// For examples/tests, invoke RunWithArgs directly.
+	_ = app.RunWithArgs([]string{"version"})
+
+	// Output:
+	// mig version 1.2.3
+}
+```
+
+</section>
 
