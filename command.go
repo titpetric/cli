@@ -24,7 +24,7 @@ import (
 type (
 	// FlagSet is here to prevent pflag leaking to imports.
 	FlagSet = pflag.FlagSet
-	Flag = pflag.Flag
+	Flag    = pflag.Flag
 
 	// Command is an individual command.
 	Command struct {
@@ -56,8 +56,8 @@ type (
 
 // Function/value aliases against pflag.
 var (
-	NewFlagSet = pflag.NewFlagSet
-	ErrHelp = pflag.ErrHelp
+	NewFlagSet      = pflag.NewFlagSet
+	ErrHelp         = pflag.ErrHelp
 	ContinueOnError = pflag.ContinueOnError
 )
 

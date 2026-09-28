@@ -1,9 +1,9 @@
 package cli_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
-	"io"
 	"os"
 	"testing"
 
@@ -168,20 +168,145 @@ func TestApp_RunWithArgs_CommandErrorDoesNotPrintUsage(t *testing.T) {
 		}
 	})
 
-	stdout := os.Stdout
-	read, write, err := os.Pipe()
-	assert.NoError(t, err)
-	os.Stdout = write
-	t.Cleanup(func() {
-		os.Stdout = stdout
+	var stdout, stderr bytes.Buffer
+	app.Stdout, app.Stderr = &stdout, &stderr
+
+	assert.ErrorIs(t, app.RunWithArgs([]string{"test"}), wantErr)
+	assert.Empty(t, stdout.String())
+	assert.Empty(t, stderr.String())
+}
+
+// TestApp_RunWithArgs_UsageStreams tests that requested help goes to Stdout
+// while the usage printed for a rejected command or flag goes to Stderr.
+func TestApp_RunWithArgs_UsageStreams(t *testing.T) {
+	newApp := func(stdout, stderr *bytes.Buffer) *cli.App {
+		app := NewApp("testapp")
+		app.Stdout, app.Stderr = stdout, stderr
+		app.AddCommand("test", "Test command", func() *Command {
+			return &Command{
+				Bind: func(fs *cli.FlagSet) {
+					var msg string
+					fs.StringVar(&msg, "msg", "", "a message")
+				},
+				Run: func(ctx context.Context, args []string) error {
+					return nil
+				},
+			}
+		})
+		return app
+	}
+
+	t.Run("help to stdout", func(t *testing.T) {
+		var stdout, stderr bytes.Buffer
+		assert.NoError(t, newApp(&stdout, &stderr).RunWithArgs([]string{"test", "--help"}))
+		assert.Contains(t, stdout.String(), "Usage: testapp test [--flags]")
+		assert.Contains(t, stdout.String(), "--msg")
+		assert.Empty(t, stderr.String())
 	})
 
-	runErr := app.RunWithArgs([]string{"test"})
-	assert.NoError(t, write.Close())
-	output, err := io.ReadAll(read)
-	assert.NoError(t, err)
-	assert.NoError(t, read.Close())
+	t.Run("unknown flag to stderr", func(t *testing.T) {
+		var stdout, stderr bytes.Buffer
+		err := newApp(&stdout, &stderr).RunWithArgs([]string{"test", "--nope"})
+		assert.Error(t, err)
+		assert.Contains(t, stderr.String(), "Usage: testapp test [--flags]")
+		assert.Empty(t, stdout.String())
+	})
 
-	assert.ErrorIs(t, runErr, wantErr)
-	assert.Empty(t, output)
+	t.Run("unknown command to stderr", func(t *testing.T) {
+		var stdout, stderr bytes.Buffer
+		err := newApp(&stdout, &stderr).RunWithArgs([]string{"nope"})
+		assert.Error(t, err)
+		assert.Contains(t, stderr.String(), "Usage: testapp (command) [--flags]")
+		assert.Empty(t, stdout.String())
+	})
+}
+
+// TestApp_Run tests that Run dispatches os.Args without the program name.
+func TestApp_Run(t *testing.T) {
+	app := NewApp("testapp")
+	var got []string
+
+	app.AddCommand("test", "Test command", func() *Command {
+		return &Command{
+			Run: func(ctx context.Context, args []string) error {
+				got = args
+				return nil
+			},
+		}
+	})
+
+	args := os.Args
+	os.Args = []string{"testapp", "test", "alpha"}
+	t.Cleanup(func() {
+		os.Args = args
+	})
+
+	assert.NoError(t, app.Run())
+	assert.Equal(t, []string{"alpha"}, got)
+}
+
+// TestApp_Help tests that Help lists every registered command with its title.
+func TestApp_Help(t *testing.T) {
+	app := NewApp("testapp")
+	app.AddCommand("first", "The first command", func() *Command { return &Command{} })
+	app.AddCommand("second", "The second command", func() *Command { return &Command{} })
+
+	var output bytes.Buffer
+	app.Stdout = &output
+	app.Help()
+
+	assert.Contains(t, output.String(), "Usage: testapp (command) [--flags]")
+	assert.Contains(t, output.String(), "first     The first command")
+	assert.Contains(t, output.String(), "second    The second command")
+}
+
+// TestApp_HelpCommand tests that HelpCommand prints the usage line, the
+// command description and the flags bound by the command.
+func TestApp_HelpCommand(t *testing.T) {
+	app := NewApp("testapp")
+	var msg string
+
+	command := &Command{
+		Name:  "test",
+		Usage: func() string { return "  Does a thing.  " },
+		Bind: func(fs *cli.FlagSet) {
+			fs.StringVar(&msg, "msg", "", "a message")
+		},
+	}
+	fs := cli.NewFlagSet(command.Name, cli.ContinueOnError)
+	command.Bind(fs)
+
+	var output bytes.Buffer
+	app.Stdout = &output
+	app.HelpCommand(fs, command)
+
+	assert.Contains(t, output.String(), "Usage: testapp test [--flags]")
+	assert.Contains(t, output.String(), "Does a thing.")
+	assert.Contains(t, output.String(), "Available options:")
+	assert.Contains(t, output.String(), "--msg")
+}
+
+// TestApp_HelpCommand_Default tests that a default command is not named in
+// its own usage line.
+func TestApp_HelpCommand_Default(t *testing.T) {
+	app := NewApp("testapp")
+	command := &Command{Name: "test", Default: true}
+	fs := cli.NewFlagSet(command.Name, cli.ContinueOnError)
+
+	var output bytes.Buffer
+	app.Stdout = &output
+	app.HelpCommand(fs, command)
+
+	assert.Contains(t, output.String(), "Usage: testapp [--flags]")
+	assert.NotContains(t, output.String(), "Available options:")
+}
+
+// TestApp_HasCommand tests that HasCommand reports registered commands only.
+func TestApp_HasCommand(t *testing.T) {
+	app := NewApp("testapp")
+	assert.False(t, app.HasCommand("test"))
+
+	app.AddCommand("test", "Test command", func() *Command { return &Command{} })
+	assert.True(t, app.HasCommand("test"))
+	assert.False(t, app.HasCommand("other"))
 }

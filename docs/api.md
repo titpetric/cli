@@ -51,6 +51,13 @@ type App struct {
 	Name	string
 	// DefaultCommand is selected when no explicit command is provided.
 	DefaultCommand	string
+	// Stdout receives the usage text printed when help is asked for.
+	// A nil Stdout means os.Stdout.
+	Stdout	io.Writer
+	// Stderr receives the usage text printed when a command or a flag is
+	// rejected, along with the diagnostics pflag reports while parsing.
+	// A nil Stderr means os.Stderr.
+	Stderr	io.Writer
 
 	commands	map[string]CommandInfo
 	commandOrder	[]string
@@ -60,13 +67,14 @@ type App struct {
 </details>
 
 <details>
-<summary><code>type FlagSet, Command, CommandInfo</code></summary>
+<summary><code>type FlagSet, Flag, Command, CommandInfo</code></summary>
 
 ```go
 // Command and CommandInfo types for CLI command handling.
 type (
 	// FlagSet is here to prevent pflag leaking to imports.
 	FlagSet	= pflag.FlagSet
+	Flag	= pflag.Flag
 
 	// Command is an individual command.
 	Command	struct {
@@ -94,6 +102,22 @@ type (
 		Title	string
 		New	func() *Command
 	}
+)
+```
+
+</details>
+
+## Vars
+
+<details>
+<summary><code>var NewFlagSet, ErrHelp, ContinueOnError</code></summary>
+
+```go
+// Function/value aliases against pflag.
+var (
+	NewFlagSet	= pflag.NewFlagSet
+	ErrHelp		= pflag.ErrHelp
+	ContinueOnError	= pflag.ContinueOnError
 )
 ```
 

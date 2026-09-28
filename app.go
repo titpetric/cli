@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"strings"
@@ -18,9 +19,32 @@ type App struct {
 	Name string
 	// DefaultCommand is selected when no explicit command is provided.
 	DefaultCommand string
+	// Stdout receives the usage text printed when help is asked for.
+	// A nil Stdout means os.Stdout.
+	Stdout io.Writer
+	// Stderr receives the usage text printed when a command or a flag is
+	// rejected, along with the diagnostics pflag reports while parsing.
+	// A nil Stderr means os.Stderr.
+	Stderr io.Writer
 
 	commands     map[string]CommandInfo
 	commandOrder []string
+}
+
+// stdout returns the writer requested usage text is printed to.
+func (app *App) stdout() io.Writer {
+	if app.Stdout == nil {
+		return os.Stdout
+	}
+	return app.Stdout
+}
+
+// stderr returns the writer usage text accompanying an error is printed to.
+func (app *App) stderr() io.Writer {
+	if app.Stderr == nil {
+		return os.Stderr
+	}
+	return app.Stderr
 }
 
 // NewApp creates a new App instance.
@@ -54,6 +78,8 @@ func (app *App) RunWithArgs(args []string) error {
 		name = command.Name
 	}
 	fs := NewFlagSet(name, ContinueOnError)
+	fs.SetOutput(app.stderr())
+	// Usage only runs when help was asked for, so it prints to Stdout.
 	fs.Usage = func() {
 		if command != nil && explicitCommand {
 			app.HelpCommand(fs, command)
@@ -66,7 +92,7 @@ func (app *App) RunWithArgs(args []string) error {
 		if errors.Is(fs.Parse(args), ErrHelp) {
 			return nil
 		}
-		app.Help()
+		app.help(app.stderr())
 		return err
 	}
 
@@ -86,7 +112,7 @@ func (app *App) RunWithArgs(args []string) error {
 		if errors.Is(err, ErrHelp) {
 			return nil
 		}
-		app.HelpCommand(fs, command)
+		app.helpCommand(app.stderr(), fs, command)
 		return err
 	}
 
@@ -110,9 +136,14 @@ func (app *App) RunWithArgs(args []string) error {
 
 // Help prints out registered commands for app.
 func (app *App) Help() {
-	fmt.Println("Usage:", app.Name, "(command) [--flags]")
-	fmt.Println("Available commands:")
-	fmt.Println()
+	app.help(app.stdout())
+}
+
+// help prints out registered commands for app to w.
+func (app *App) help(w io.Writer) {
+	fmt.Fprintln(w, "Usage:", app.Name, "(command) [--flags]")
+	fmt.Fprintln(w, "Available commands:")
+	fmt.Fprintln(w)
 
 	maxLen := 0
 	for _, name := range app.commandOrder {
@@ -124,25 +155,30 @@ func (app *App) Help() {
 	format := pad + "%-" + fmt.Sprintf("%d", maxLen+3) + "s %s\n"
 	for _, name := range app.commandOrder {
 		command := app.commands[name]
-		fmt.Printf(format, command.Name, command.Title)
+		fmt.Fprintf(w, format, command.Name, command.Title)
 	}
-	fmt.Println()
+	fmt.Fprintln(w)
 }
 
 // HelpCommand prints out help for a specific command.
 func (app *App) HelpCommand(fs *FlagSet, command *Command) {
+	app.helpCommand(app.stdout(), fs, command)
+}
+
+// helpCommand prints out help for a specific command to w.
+func (app *App) helpCommand(w io.Writer, fs *FlagSet, command *Command) {
 	usage := app.Name
 	if !command.Default {
 		usage += " " + command.Name
 	}
 	usage += " [--flags]"
-	fmt.Println("Usage:", usage)
-	fmt.Println()
+	fmt.Fprintln(w, "Usage:", usage)
+	fmt.Fprintln(w)
 
 	if command.Usage != nil {
 		if text := strings.TrimSpace(command.Usage()); text != "" {
-			fmt.Println(text)
-			fmt.Println()
+			fmt.Fprintln(w, text)
+			fmt.Fprintln(w)
 		}
 	}
 
@@ -152,10 +188,12 @@ func (app *App) HelpCommand(fs *FlagSet, command *Command) {
 		flags = command.Flags
 	}
 	if flags.HasFlags() {
-		fmt.Println("Available options:")
-		fmt.Println()
-		flags.PrintDefaults()
-		fmt.Println()
+		fmt.Fprintln(w, "Available options:")
+		fmt.Fprintln(w)
+		// PrintDefaults writes to the FlagSet's own output, which
+		// would split the usage text across two streams.
+		fmt.Fprint(w, flags.FlagUsages())
+		fmt.Fprintln(w)
 	}
 }
 
