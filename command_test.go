@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/spf13/pflag"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/titpetric/cli"
+	"github.com/titpetric/cli/tests/assert"
 )
 
 type Command = cli.Command

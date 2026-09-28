@@ -7,9 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/titpetric/cli"
+	"github.com/titpetric/cli/tests/assert"
 )
 
 var NewApp = cli.NewApp
