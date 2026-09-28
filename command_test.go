@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/spf13/pflag"
-
 	"github.com/titpetric/cli"
 	"github.com/titpetric/cli/tests/assert"
 )
@@ -33,7 +31,7 @@ func TestCommand_Bind(t *testing.T) {
 	}
 
 	// Simulate app.RunWithArgs
-	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs := cli.NewFlagSet("test", cli.ContinueOnError)
 	fs.Usage = func() {}
 	cmd.Bind(fs)
 
@@ -61,7 +59,7 @@ func TestCommand_ParseEnvironment(t *testing.T) {
 	}
 
 	// Simulate app.RunWithArgs with environment
-	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs := cli.NewFlagSet("test", cli.ContinueOnError)
 	fs.Usage = func() {}
 	cmd.Bind(fs)
 
@@ -100,7 +98,7 @@ func TestCommand_MultipleFlags(t *testing.T) {
 		},
 	}
 
-	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs := cli.NewFlagSet("test", cli.ContinueOnError)
 	fs.Usage = func() {}
 	cmd.Bind(fs)
 
@@ -115,7 +113,7 @@ func TestCommand_MultipleFlags(t *testing.T) {
 func TestParseWithFlagSet(t *testing.T) {
 	var dbDsn string
 
-	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs := cli.NewFlagSet("test", cli.ContinueOnError)
 	fs.StringVar(&dbDsn, "db-dsn", "default", "")
 
 	err := ParseWithFlagSet(fs, []string{})

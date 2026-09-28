@@ -8,8 +8,6 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-
-	"github.com/spf13/pflag"
 )
 
 var errNoCommand = errors.New("no command found")
@@ -55,7 +53,7 @@ func (app *App) RunWithArgs(args []string) error {
 	if command != nil {
 		name = command.Name
 	}
-	fs := pflag.NewFlagSet(name, pflag.ContinueOnError)
+	fs := NewFlagSet(name, ContinueOnError)
 	fs.Usage = func() {
 		if command != nil && explicitCommand {
 			app.HelpCommand(fs, command)
@@ -65,7 +63,7 @@ func (app *App) RunWithArgs(args []string) error {
 	}
 
 	if err != nil {
-		if errors.Is(fs.Parse(args), pflag.ErrHelp) {
+		if errors.Is(fs.Parse(args), ErrHelp) {
 			return nil
 		}
 		app.Help()
@@ -78,14 +76,14 @@ func (app *App) RunWithArgs(args []string) error {
 	}
 
 	// build a separate FlagSet with only command-specific flags
-	command.Flags = pflag.NewFlagSet(command.Name+"-flags", pflag.ContinueOnError)
-	fs.VisitAll(func(f *pflag.Flag) {
+	command.Flags = NewFlagSet(command.Name+"-flags", ContinueOnError)
+	fs.VisitAll(func(f *Flag) {
 		command.Flags.AddFlag(f)
 	})
 
 	// parse flags and set from environment
 	if err := ParseWithFlagSet(fs, args); err != nil {
-		if errors.Is(err, pflag.ErrHelp) {
+		if errors.Is(err, ErrHelp) {
 			return nil
 		}
 		app.HelpCommand(fs, command)
