@@ -2,4 +2,4 @@ module github.com/titpetric/cli
 
 go 1.27.0
 
-require github.com/spf13/pflag v1.0.10
+require github.com/spf13/pflag v1.1.0
